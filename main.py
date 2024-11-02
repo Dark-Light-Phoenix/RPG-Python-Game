@@ -5,137 +5,118 @@ pygame.init()
 
 WIDTH, HEIGHT = 1680, 1050
 screen = pygame.display.set_mode ((WIDTH, HEIGHT))
-pygame.display.set_caption ("Головне меню")
+pygame.display.set_caption ("Main Menu")
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
-BLUE = (0, 0, 255)
-GRAY = (250, 250, 250)
+GRAY = (220, 250, 210)
 
 font = pygame.font.SysFont (None, 40)
 small_font = pygame.font.SysFont(None, 30)
 
-#------------------------------------------------------------------------------------------------Function of drawing button
+#------------------------------------------------------------------------------------------------Classes for Button, Screen and Positions
 
-def draw_button(text, x, y, width, height, inactive_color, active_color, action=None):
-    mouse = pygame.mouse.get_pos()
-    click = pygame.mouse.get_pressed()
+class Button:
+    def __init__ (self, text, action, color = GREEN, font_color = BLACK):
+        self.text = text
+        self.action = action
+        self.color = color
+        self.font_color = font_color
+        self.rect = None
 
-    if x + width > mouse[0] > x and y + height > mouse[1] > y:
-        pygame.draw.rect(screen, active_color, (x, y, width, height))
-        if click[0] == 1 and action is not None:
-            action()
-    else:
-        pygame.draw.rect(screen, inactive_color, (x, y, width, height))
+    def render (self, x, y):
+        text_surface = font.render(self.text, True, self.font_color)
+        self.rect = pygame.Rect(x, y, text_surface.get_width() + 40, text_surface.get_height() + 20)
+        pygame.draw.rect(screen, self.color, self.rect)
+        screen.blit(text_surface, (self.rect.x + 20, self.rect.y + 10))
 
-    text_surface = font.render(text, True, BLACK)
-    screen.blit(text_surface, (x + (width / 2 - text_surface.get_width() / 2),
-                               y + (height / 2 - text_surface.get_height() / 2)))
+    def check_click(self, mouse_pos):
+        if self.rect and self.rect.collidepoint(mouse_pos):
+            self.action()
+
+class Screen:
+    def __init__ (self, color = GRAY):
+        self.color = color
+        self.buttons = []
+
+    def add_button(self, text, action, color = GREEN):
+        button = Button (text, action, color)
+        self.buttons.append(button)
+
+    def render(self):
+        screen.fill(self.color)
+        total_height = sum(button.rect.height + 20 for button in self.buttons if button.rect) - 20
+        y = (HEIGHT - total_height) // 2
+
+        for button in self.buttons:
+            button.render((WIDTH - button.rect.width) // 2, y)
+            y += button.rect.height + 20
+
+    def handle_event(self):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            mouse_pos = pygame.mouse.get_pos()
+            for button in self.buttons:
+                button.check_click(mouse_pos)
+
+class ScreenManager:
+    def __init__ (self):
+        self.screen = []
+        self.current_screen = None
+
+    def add_screen(self, name, screen):
+        self.screen[name] = screen
+
+    def set_screen(self, name):
+        self.current_screen = self.current_screen.get(name)
+        print(f"Changing Screen on: {name}")
+
+    def render(self):
+        if self.current_screen:
+            self.current_screen.render()
+
+    def handle_events(self, event):
+        if self.current_screen:
+            self.current_screen.handle_events(event)
+
+screen_manager = ScreenManager()
+
+#------------------------------------------------------------------------------------------------Main Menu
+
+main_menu = Screen(color = GRAY)
+main_menu.add_button("New Game", lambda: screen_manager.set_screen("new_game"))
+main_menu.add_button("Setting", lambda: screen_manager.set_screen("settings"))
+main_menu.add_button("Exit", sys.exit, color = RED)
 
 #------------------------------------------------------------------------------------------------New Game Menu
 
-selected_class = None
-selected_map = None
-selected_difficulty = None
+new_game = Screen(color = GRAY)
+new_game.add_button("Start Game", lambda: screen_manager.set_screen("start_game"))
+new_game.add_button("Select Character", lambda: screen_manager.set_screen("select_character"))
+new_game.add_button("Select Difficulty", lambda: screen_manager.set_screen("select_difficulty"))
+new_game.add_button("Back", lambda: screen_manager.set_screen("main_menu"))
 
-def NewGame():
-    while True:
-        screen.fill(WHITE)
+#------------------------------------------------------------------------------------------------Setting Menu
 
-        draw_button("Почати гру", 300, 150, 200, 50, GREEN, RED, start_game)
-        draw_button("Вибрати складність", 300, 250, 200, 50, GREEN, RED, select_difficulty)
-        draw_button("Вибрати клас персонажа", 300, 350, 200, 50, GREEN, RED, select_character)
-        draw_button("Вибрати розмір карти", 300, 450, 200, 50, GREEN, RED, select_map)
-        draw_button("Назад", 300, 550, 200, 50, GREEN, RED, main_menu)
+setting = Screen(color = GRAY)
+setting.add_button("Change Window", change_window)
+setting.add_button("Change Font", change_font)
+setting.add_button("Back", lambda: screen_manager.set_screen("main_menu"))
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+#------------------------------------------------------------------------------------------------Select Character Menu
 
-        pygame.display.update()
+start_game = Screen(color = GRAY)
 
+#------------------------------------------------------------------------------------------------Select Character Menu
 
-#------------------------------------------------------------------------------------------------Selecting Difficulty Menu
-
-def select_difficulty():
-    while True:
-        screen.fill(WHITE)
-
-        draw_button ("Легкий", 300, 150, 200, 50, GREEN, RED, select_easy)
-        draw_button("Середній", 300, 250, 200, 50, GREEN, RED, select_medium)
-        draw_button("Важкий", 300, 350, 200, 50, GREEN, RED, select_hard)
-        draw_button("Назад", 300, 450, 200, 50, GREEN, RED, NewGame)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-        pygame.display.update()
-
-def select_easy():
-    global selected_difficulty
-    selected_difficulty = "Легкий"
-    print(f"Вибраний рівень складності: {selected_difficulty}")
-
-def select_medium():
-    global selected_difficulty
-    selected_difficulty = "Середній"
-    print(f"Вибраний рівень складності: {selected_difficulty}")
-
-def select_hard():
-    global selected_difficulty
-    selected_difficulty = "Важкий"
-    print(f"Вибраний рівень складності: {selected_difficulty}")
-
-#------------------------------------------------------------------------------------------------Selecting Character Menu
-
-def select_character():
-    while True:
-        screen.fill(WHITE)
-
-        draw_button ("Воїн", 300, 150, 200, 50, GREEN, RED, select_warrior)
-        draw_button("Маг", 300, 250, 200, 50, GREEN, RED, select_mage)
-        draw_button("Мисливець", 300, 350, 200, 50, GREEN, RED, select_hunter)
-        draw_button("Священник", 300, 450, 200, 50, GREEN, RED, select_priest)
-        draw_button("Свій персонаж", 300, 550, 200, 50, GREEN, RED, select_custom)
-        draw_button("Назад", 300, 650, 200, 50, GREEN, RED, NewGame)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-        pygame.display.update()
-
-def select_warrior():
-    global selected_class
-    selected_class = "Воїн"
-    print(f"Вибрано: {selected_class}")
-
-def select_mage():
-    global selected_class
-    selected_class = "Маг"
-    print(f"Вибрано: {selected_class}")
-
-def select_hunter():
-    global selected_class
-    selected_class = "Мисливець"
-    print(f"Вибрано: {selected_class}")
-
-def select_priest():
-    global selected_class
-    selected_class = "Священник"
-    print(f"Вибрано: {selected_class}")
-
-def select_custom():
-    global selected_class
-    selected_class = "Свій персонаж"
-    print(f"Вибрано: {selected_class}")
-    create_custom_character()
+select_character = Screen(color = GRAY)
+select_character.add_button("Warrior", select_warrior)
+select_character.add_button("Mage", select_mage)
+select_character.add_button("Hunter", select_hunter)
+select_character.add_button("Priest", select_priest)
+select_character.add_button("Custom", select_custom)
+select_character.add_button("Back", lambda: screen_manager.set_screen("new_game"))
 
 #------------------------------------------------------------------------------------------------Class of Characters
 
@@ -148,40 +129,40 @@ class Character:
         self.descritption = description
 
 characters = {
-    "Воїн": Character (
-        name = "Воїн",
+    "Warrior": Character (
+        name = "Warrior",
         hp = "200",
-        abilities = ["Сильний удар", "Блокування щитом"],
-        start_item = ["Меч", "Щит", "Шкіряний нагрудник"],
-        description = "Сильний і витривалий боєць, здатний витримувати сильні атаки."
+        abilities = ["Strong attack", "Block"],
+        start_item = ["Sword", "Shield", "Lather Chest"],
+        description = "Strong and brave warrior, that can bear a lot of damage."
     ),
-    "Маг": Character (
-        name = "Маг",
+    "Mage": Character (
+        name = "Mage",
         hp = "75",
-        abilities = ["Магічний бар'єр", "Вогняна куля", "Заморозка"],
-        start_item = ["Дерев'яний посох", "Мантія", "Книга заклять"],
-        description = "Майстер магії, здатний наносити сильні магічні атаки."
+        abilities = ["Magical Barrier", "Fireball", "Freeze"],
+        start_item = ["Wooden Staff", "Cloak", "Book of Spells"],
+        description = "Master of magic. Has a great knowledge and experience. Can deal a huge magical damage and support yourself."
     ),
-    "Мисливець": Character (
-        name = "Мисливець",
+    "Hunter": Character (
+        name = "Hunter",
         hp = "120",
-        abilities = ["Обшук", "Пастка", "Полювання"],
-        start_item = ["Дерев'яний лук", "Капюшон", "Шкіряні ботинки"],
-        description = "Майстер лука і пасток, що використовує свою спритність для полювання."
+        abilities = ["Search", "Trap", "Hunting"],
+        start_item = ["Wooden Bow", "Hood", "Leather Boots"],
+        description = "Master of hunting. Very clever in using traps and searching hes enemies."
     ),
-    "Священник": Character (
-        name = "Священник",
+    "Priest": Character (
+        name = "Priest",
         hp = "75",
-        abilities = ["Молитва", "Вигнання", "Святий удар"],
-        start_item = ["Жезл", "Мантія", "Талісман"],
-        description = "Лікувальник, який підтримує команду і завдає святої шкоди ворогам."
+        abilities = ["Pray", "Expel", "Hollow Strike"],
+        start_item = ["Rod", "Cloak", "Mascot"],
+        description = "Healer that use hollow spells against evil. Support everybody and heal all kind of wounds, including curses."
     ),
-    "Свій персонаж": Character (
-        name = "Невідомо",
-        hp = "Невідомо",
+    "Custom": Character (
+        name = "Unknown",
+        hp = "Unknown",
         abilities = [],
         start_item = [],
-        description = "Невідомо"
+        description = "Unknown"
     )
 }
 
@@ -193,8 +174,8 @@ selected_items = []
 selected_health = 150
 selected_description = ""
 
-avaible_abilities = ["Вогняна куля", "Заморозка", "Блокування", "Обшук", "Молитва", "Святий удар", "Блокування щитом", "Полювання", "Жертвоприношення"]
-avaible_items = ["Щит", "Меч", "Дерев'яний лук", "Дерев'яний посох", "Мантія", "Шкіряний нагрудник", "Капюшон", "Шкіряні ботинки", "Талісман"]
+available_abilities = ["Fireball", "Freeze", "Magical Barrier", "Search", "Pray", "Hollow Strike", "Block", "Hunting", "Dispel curse", "Heal", "Expel"]
+available_items = ["Shield", "Sword", "Wooden Bow", "Wooden Staff", "Cloak", "Leather Chest", "Hood", "Leather Boots", "Mascot"]
 
 MAX_ITEMS = 3
 MAX_ABILITIES = 3
@@ -206,66 +187,59 @@ def create_custom_character():
     name_active = False
     description_active = False
 
-    while True:
-        screen.fill(WHITE)
+    screen.fill(GRAY)
 
-        title_surface = font.render ("Створення свого персонажа", True, BLACK)
-        screen.blit (title_surface, (WIDTH // 2 - title_surface.get_width() // 2, 20))
+    title_surface = font.render ("Creating Custom Character", True, BLACK)
+    screen.blit (title_surface, (WIDTH // 2 - title_surface.get_width() // 2, 20))
 
-        draw_text_input_box(selected_name, 100, 100, 600, 50, GREEN, GRAY, name_active)
-        name_label = font.render("Ім'я персонажа:", True, BLACK)
-        screen.blit (name_label, (100, 60))
+    draw_text_input_box(selected_name, 100, 100, 600, 50, GREEN, GRAY, name_active)
+    name_label = font.render("Name of Character:", True, BLACK)
+    screen.blit (name_label, (100, 60))
+    draw_text_input_box(selected_name, 100, 100, 600, 50, GREEN, GRAY, name_active)
 
-        health_label = font.render (f"Здоров'я: {selected_health}", True, BLACK)
-        screen.blit (health_label, (100, 200))
-        draw_health_slider()
+    health_label = font.render (f"Health: {selected_health}", True, BLACK)
+    screen.blit (health_label, (100, 200))
+    draw_health_slider()
 
-        ability_label = font.render ("Виберіть здібності:", True, BLACK)
-        screen.blit (ability_label, (100, 300))
-        for idx, ability in enumerate (avaible_abilities):
-            draw_button (ability, 100, 250 + idx * 50, 200, 40, GRAY, GREEN, lambda a = ability: select_ability (a))
+    ability_label = font.render ("Choose Abilities:", True, BLACK)
+    screen.blit (ability_label, (100, 300))
+    for idx, ability in enumerate (available_abilities):
+        draw_button (ability, 100, 250 + idx * 50, 200, 40, GRAY, GREEN, lambda a = ability: select_ability (a))
 
-        item_label = font.render ("Виберіть предмети:", True, BLACK)
-        screen.blit (item_label, (400, 300))
-        for idx, item in enumerate (avaible_items):
-            draw_button (item, 400, 250 + idx * 50, 200, 40, GRAY, GREEN, lambda i = item: select_item (i))
+    item_label = font.render ("Choose Items:", True, BLACK)
+    screen.blit (item_label, (400, 300))
+    for idx, item in enumerate (available_items):
+        draw_button (item, 400, 250 + idx * 50, 200, 40, GRAY, GREEN, lambda i = item: select_item (i))
 
-        draw_text_input_box(selected_description, 100, 200, 600, 50, GREEN, GRAY, description_active)
-        description_label = font.render("Опис персонажа:", True, BLACK)
-        screen.blit(description_label, (100, 160))
+    draw_text_input_box(selected_description, 100, 200, 600, 50, GREEN, GRAY, description_active)
+    description_label = font.render("Description of Character:", True, BLACK)
+    screen.blit(description_label, (100, 160))
+    draw_text_input_box(selected_description, 100, 650, 600, 50, GREEN, GRAY, description_active)
 
-        draw_button ("Зберегти персонажа", 300, 500, 200, 50, GRAY, GREEN, save_character)
+    draw_button ("Save Character", 300, 500, 200, 50, GRAY, GREEN, save_character)
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+    if event.type == pygame.MOUSEBUTTONDOWN:
+        if 100 <= event.pos [0] <= 700 and 100 <= event.pos [1] <= 150:
+            name_active = True
+            description_active = False
+        elif 100 <= event.pos [0] <= 700 and 200 <= event.pos [1] <= 250:
+            description_active = True
+            name_active = False
+        else:
+            name_active = False
+            description_active = False
 
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if 100 <= event.pos [0] <= 700 and 100 <= event.pos [1] <= 150:
-                name_active = True
-                description_active = False
-            elif 100 <= event.pos [0] <= 700 and 200 <= event.pos [1] <= 250:
-                description_active = True
-                name_active = False
-            else:
-                name_active = False
-                description_active = False
-
-        if event.type == pygame.KEYDOWN:
-            if name_active:
-                if event.key == pygame.K_BACKSPACE:
-                    selected_name = selected_name [:-1]
-                elif len (selected_name) < MAX_NAME_LENGTH:
-                    selected_name += event.unicode
-            if description_active:
-                if event.key == pygame.K_BACKSPACE:
-                    selected_description = selected_description [:-1]
-                elif len (selected_description) < MAX_DESCRIPTION_LENGTH:
-                    selected_description += event.unicode
-
-        pygame.display.update()
-
+    if event.type == pygame.KEYDOWN:
+        if name_active:
+            if event.key == pygame.K_BACKSPACE:
+                selected_name = selected_name [:-1]
+            elif len (selected_name) < MAX_NAME_LENGTH:
+                selected_name += event.unicode
+        if description_active:
+            if event.key == pygame.K_BACKSPACE:
+                selected_description = selected_description [:-1]
+            elif len (selected_description) < MAX_DESCRIPTION_LENGTH:
+                selected_description += event.unicode
 
 def draw_text_input_box(text, x, y, width, height, active_color, inactive_color, active):
     box_color = active_color if active else inactive_color
@@ -299,104 +273,72 @@ def select_ability(ability):
     global selected_abilities
     if ability in selected_abilities:
         selected_abilities.remove (ability)
-        print(f"Видалено: {ability}")
+        print(f"Deleted: {ability}")
     elif len (selected_abilities) < MAX_ABILITIES:
         selected_abilities.append (ability)
-        print (f"Додано: {ability}")
+        print (f"Added: {ability}")
 
 def select_item(item):
     global selected_items
     if item in selected_items:
         selected_items.remove (item)
-        print (f"Видалено: {item}")
+        print (f"Deleted: {item}")
     elif len (selected_items) < MAX_ITEMS:
         selected_items.append (item)
-        print (f"Додано: {item}")
+        print (f"Added: {item}")
 
 def save_character():
-    print (f"Персонажа створено з параметрами:")
+    print (f"Character Created with those Parameters:")
     if len (selected_name) > MAX_NAME_LENGTH:
-        print ("Ім'я занадто довге")
+        print ("Name is too long")
     else:
-        print (f"Ім'я персонажа: {selected_name}")
-    print (f"Здоров'я: {selected_health}")
-    print (f"Вибрані здібності: {selected_abilities}")
-    print (f"Вибрані предмети: {selected_items}")
+        print (f"Character Name: {selected_name}")
+    print (f"Health: {selected_health}")
+    print (f"Chosen Abilities: {selected_abilities}")
+    print (f"Chosen Items: {selected_items}")
     if len (selected_description) > MAX_DESCRIPTION_LENGTH:
-        print ("Опис занадто довгий")
+        print ("Description is too long")
     else:
-        print (f"Опис персонажа: {selected_description}")
+        print (f"Character Description: {selected_description}")
+
+#------------------------------------------------------------------------------------------------Selecting Difficulty Menu
+
+selected_class = None
+selected_map = None
+selected_difficulty = None
+
+select_difficulty = Screen(color = GRAY)
+select_difficulty.add_button("Easy", select_easy)
+select_difficulty.add_button("Medium", select_medium)
+select_difficulty.add_button("Hard", select_hard)
+select_difficulty.add_button("Insane", select_insane)
+select_difficulty.add_button("Back", lambda: screen_manager.set_screen("new_game"))
+
+#------------------------------------------------------------------------------------------------Screen Manager Settings
+
+screen_manager.add_screen("main_menu", main_menu)
+
+screen_manager.add_screen("settings", setting)
+screen_manager.add_screen("change_window", change_window)
+screen_manager.add_screen("change_font", change_font)
+
+screen_manager.add_screen("new_game", new_game)
+screen_manager.add_screen("start_game", start_game)
+screen_manager.add_screen("select_character", select_character)
+screen_manager.add_screen("select_difficulty", select_difficulty)
 
 
+screen_manager.set_screen("main_menu")
 
-#------------------------------------------------------------------------------------------------Selecting Map
+#------------------------------------------------------------------------------------------------
 
-def select_map():
-    while True:
-        screen.fill(WHITE)
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
 
-        draw_button ("Малий", 300, 150, 200, 50, GREEN, RED, select_map_small)
-        draw_button("Середній", 300, 250, 200, 50, GREEN, RED, select_map_medium)
-        draw_button("Великий", 300, 350, 200, 50, GREEN, RED, select_map_large)
-        draw_button("Гігантський", 300, 450, 200, 50, GREEN, RED, select_map_enormous)
-        draw_button("Назад", 300, 550, 200, 50, GREEN, RED, NewGame)
+        screen_manager.handle_events(event)
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-        pygame.display.update()
-
-def select_map_small():
-    global selected_map
-    selected_map = "Малий"
-    print(f"Вибраний розмір карти: {selected_map}")
-
-def select_map_medium():
-    global selected_map
-    selected_map = "Середній"
-    print(f"Вибраний розмір карти: {selected_map}")
-
-def select_map_large():
-    global selected_map
-    selected_map = "Великий"
-    print(f"Вибраний розмір карти: {selected_map}")
-
-def select_map_enormous():
-    global selected_map
-    selected_map = "Гігантський"
-    print(f"Вибраний розмір карти: {selected_map}")
-
-#------------------------------------------------------------------------------------------------Start_game
-
-def start_game():
-    while True:
-        screen.fill(WHITE)
-
-#------------------------------------------------------------------------------------------------Main Menu
-
-def main_menu():
-    while True:
-        screen.fill(WHITE)
-
-        draw_button ("Нова гра", 300, 150, 200, 50, GREEN, RED, NewGame)
-        draw_button("Налаштування", 300, 250, 200, 50, GREEN, RED, Setting)
-        draw_button("Вихід", 300, 350, 200, 50, GREEN, RED, Exit)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-        pygame.display.update()
-
-def Setting():
-    draw_button("Нова гра", 300, 150, 200, 50, GREEN, RED, NewGame)
-
-def Exit():
-    pygame.quit()
-    sys.exit()
-
-main_menu()
-
+    screen_manager.render()
+    pygame.display.update()
