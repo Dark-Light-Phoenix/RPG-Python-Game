@@ -145,7 +145,7 @@ class CustomCharacter(Screen):
         super().__init__(color)
         self.character_data = {
             "name": "",
-            "health": 100,
+            "health": 0,
             "abilities": [],
             "items": [],
             "description": ""
@@ -159,7 +159,7 @@ class NameHealthStep(CustomCharacter):
 
     def render(self):
         screen.fill(self.color)
-        title_surface = font.render("Step 1: Choose Name of Character and Choose Amount of Health Points", True, BLACK)
+        title_surface = font.render("Step 1: Choose Name of Character and Amount of Health Points", True, BLACK)
         screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, 20))
 
         name_label = font.render("Name:", True, BLACK)
@@ -170,10 +170,8 @@ class NameHealthStep(CustomCharacter):
         screen.blit(health_label, (100, 250))
         self.draw_health_label()
 
-        super().render()
-
     def draw_text_input_box(self, text, x, y, width, height, active_color, active):
-        box_color = active_color if active else GRAY
+        box_color = active_color if active else WHITE
         pygame.draw.rect(screen, box_color, (x, y, width, height))
         text_surface = font.render(text, True, BLACK)
         screen.blit(text_surface, (x + 5, y + (height // 2 - text_surface.get_height() // 2)))
@@ -183,11 +181,11 @@ class NameHealthStep(CustomCharacter):
         slider_width, slider_height = 500, 20
         pygame.draw.rect(screen, GREEN, (slider_x, slider_y, slider_width, slider_height))
 
-        handle_x = slider_x + (self.character_data["health"] - 50) * 5
+        handle_x = slider_x + (self.character_data["health"]) * 5
         pygame.draw.rect(screen, RED, (handle_x, slider_y - 5, 10, slider_height + 10))
 
         if pygame.mouse.get_pressed()[0] == 1 and slider_x <= pygame.mouse.get_pos()[0] <= slider_x + slider_width:
-            self.character_data["health"] = 50 * (pygame.mouse.get_pos()[0] - slider_x) // 5
+            self.character_data["health"] = (pygame.mouse.get_pos()[0] - slider_x) // 5
 
     def handle_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -195,12 +193,9 @@ class NameHealthStep(CustomCharacter):
             self.name_active = 100 <= mouse_pos[0] <= 700 and 100 <= mouse_pos[1] <= 150
 
         if event.type == pygame.KEYDOWN and self.name_active:
-            self.character_data["name"] = self.character_data["name"][:-1]
-        elif len(self.character_data["name"]) < 12:
-            if hasattr(event, 'unicode'):
+            self.character_data["name"] = self.character_data["name"]
+        elif hasattr(event, 'unicode'):
                 self.character_data["name"] += event.unicode
-
-        super().handle_events(event)
 
     def next_step(self):
             screen_manager.set_screen("abilities_step")
@@ -209,28 +204,40 @@ class AbilitiesStep(CustomCharacter):
     def __init__(self, color=GRAY):
         super().__init__(color)
         self.available_abilities = ["Fireball", "Freeze", "Shield Block", "Heal", "Hunting"]
-        for idx, ability in enumerate(self.available_abilities):
+
+        self.buttons = []
+
+        for ability in self.available_abilities:
             self.add_button(ability, lambda a=ability: self.select_ability(a), color=GRAY)
-        self.add_button("Next", self.next_step, color=GREEN)
+
         self.add_button("Back", self.prev_step, color=GREEN)
+        self.add_button("Next", self.next_step, color=GREEN)
 
     def render(self):
         screen.fill(self.color)
         title_surface = font.render("Step 2: Choose Abilities", True, BLACK)
         screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, 20))
 
-        ability_label = font.render("Choose Abilities:", True, BLACK)
-        screen.blit(ability_label, (100, 60))
+        button_spacing = 20
+        total_width = sum(button.width + button_spacing for button in self.buttons[:len(self.available_abilities)]) - button_spacing
+        x = (WIDTH - total_width) // 2
+        y = HEIGHT // 2 - 50
+        for idx, button in enumerate(self.buttons[:len(self.available_abilities)]):
+            button.render(x, y)
+            x += button.width + 20
 
-        super().render()
+        nav_total_width = self.buttons[-2].width + self.buttons[-1].width + button_spacing
+        nav_x = (WIDTH - nav_total_width) // 2
+        nav_y = y + 80
+        self.buttons[-2].render(nav_x, nav_y)
+        self.buttons[-1].render(nav_x + self.buttons[-2].width + button_spacing, nav_y)
 
     def select_ability(self, ability):
         if ability in self.character_data["abilities"]:
             self.character_data["abilities"].remove(ability)
         elif len(self.character_data["abilities"]) < 3:
             self.character_data["abilities"].append(ability)
-
-        super().handle_events(event)
+        print("Selected abilities:", self.character_data["abilities"])
 
     def next_step(self):
         screen_manager.set_screen("items_step")
@@ -242,28 +249,40 @@ class ItemsStep(CustomCharacter):
     def __init__(self, color=GRAY):
         super().__init__(color)
         self.available_items = ["Sword", "Shield", "Bow", "Staff", "Armor"]
-        self.add_button("Next", self.next_step, color=GREEN)
-        self.add_button("Back", self.prev_step, color=GREEN)
-        for idx, item in enumerate(self.available_items):
+
+        self.buttons = []
+
+        for item in self.available_items:
             self.add_button(item, lambda i=item: self.select_item(i), color=GRAY)
+
+        self.add_button("Back", self.prev_step, color=GREEN)
+        self.add_button("Next", self.next_step, color=GREEN)
 
     def render(self):
         screen.fill(self.color)
         title_surface = font.render("Step 3: Choose Items", True, BLACK)
         screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, 20))
 
-        item_label = font.render("Choose Items:", True, BLACK)
-        screen.blit(item_label, (100, 60))
+        button_spacing = 20
+        total_width = sum(button.width + button_spacing for button in self.buttons[:len(self.available_items)]) - button_spacing
+        x = (WIDTH - total_width) // 2
+        y = HEIGHT // 2 - 50
+        for idx, button in enumerate(self.buttons[:len(self.available_items)]):
+            button.render(x, y)
+            x += button.width + 20
 
-        super().render()
+        nav_total_width = self.buttons[-2].width + self.buttons[-1].width + button_spacing
+        nav_x = (WIDTH - nav_total_width) // 2
+        nav_y = y + 80
+        self.buttons[-2].render(nav_x, nav_y)
+        self.buttons[-1].render(nav_x + self.buttons[-2].width + button_spacing, nav_y)
 
     def select_item(self, item):
         if item in self.character_data["items"]:
             self.character_data["items"].remove(item)
         elif len(self.character_data["items"]) < 3:
             self.character_data["items"].append(item)
-
-        super().handle_events(event)
+        print("Selected Items:", self.character_data["items"])
 
     def next_step(self):
         screen_manager.set_screen("description_step")
@@ -286,8 +305,6 @@ class DescriptionStep(CustomCharacter):
         self.draw_text_input_box(self.character_data["description"], 100, 100, 600, 50, GREEN, self.description_active)
         description_label = font.render("Description:", True, BLACK)
         screen.blit(description_label, (100, 60))
-
-        super().render()
 
     def draw_text_input_box(self, text, x, y, width, height, active_color, active):
         box_color = active_color if active else GRAY
@@ -318,7 +335,7 @@ class DescriptionStep(CustomCharacter):
 class SummaryStep(CustomCharacter):
     def __init__(self, color=GRAY):
         super().__init__(color)
-        self.add_button("Back to Main Menu", lambda: screen_manager.set_screen("main_menu"), color=GREEN)
+        self.add_button("Back to Select Character", lambda: screen_manager.set_screen("select_character"), color=GREEN)
 
     def render(self):
         screen.fill(self.color)
