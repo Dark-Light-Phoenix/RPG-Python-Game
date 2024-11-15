@@ -155,50 +155,96 @@ class NameHealthStep(CustomCharacter):
     def __init__(self, color=GRAY):
         super().__init__(color)
         self.name_active = False
+        self.dragging = False
+        self.add_button("Return", self.return_step, color=GREEN)
         self.add_button("Next", self.next_step, color=GREEN)
 
     def render(self):
         screen.fill(self.color)
         title_surface = font.render("Step 1: Choose Name of Character and Amount of Health Points", True, BLACK)
-        screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, 20))
+        screen.blit(title_surface, ((WIDTH - title_surface.get_width()) // 2, HEIGHT // 10))
 
+        name_label_y = HEIGHT // 4
         name_label = font.render("Name:", True, BLACK)
-        screen.blit(name_label, (100, 60))
-        self.draw_text_input_box(self.character_data["name"], 100, 100, 600, 50, GREEN, self.name_active)
+        name_label_x = (WIDTH - (name_label.get_width() + 10 + (WIDTH // 2))) // 2
+        screen.blit(name_label, (name_label_x, name_label_y))
 
+        name_box_x = name_label_x + name_label.get_width() + 10
+        name_box_width = WIDTH // 2
+        name_box_height = HEIGHT // 15
+        self.draw_text_input_box(self.character_data["name"], name_box_x, name_label_y, name_box_width, name_box_height, WHITE, self.name_active)
+
+        health_label_y = name_label_y + HEIGHT // 6
         health_label = font.render(f"Health: {self.character_data['health']}", True, BLACK)
-        screen.blit(health_label, (100, 250))
-        self.draw_health_label()
+        screen.blit(health_label, (WIDTH // 8, health_label_y))
+
+        slider_y = health_label_y + HEIGHT // 12
+        self.draw_health_label(slider_y)
+
+        button_y = slider_y + HEIGHT // 15 + 30
+        if len(self.buttons) >= 2:
+            self.buttons[0].render((WIDTH // 2) - self.buttons[0].width - 20, button_y)
+            self.buttons[1].render((WIDTH // 2) + 20, button_y)
+
 
     def draw_text_input_box(self, text, x, y, width, height, active_color, active):
-        box_color = active_color if active else WHITE
+        box_color = active_color if active else RED
         pygame.draw.rect(screen, box_color, (x, y, width, height))
-        text_surface = font.render(text, True, BLACK)
+        display_text = text if text else ""
+        text_surface = font.render(display_text, True, BLACK)
         screen.blit(text_surface, (x + 5, y + (height // 2 - text_surface.get_height() // 2)))
 
-    def draw_health_label(self):
-        slider_x, slider_y = 150, 300
-        slider_width, slider_height = 500, 20
+    def draw_health_label(self, slider_y):
+        slider_x = WIDTH // 8
+        slider_width = WIDTH // 2
+        slider_height = HEIGHT // 30
+        min_health, max_health = 1, 150
         pygame.draw.rect(screen, GREEN, (slider_x, slider_y, slider_width, slider_height))
 
-        handle_x = slider_x + (self.character_data["health"]) * 5
-        pygame.draw.rect(screen, RED, (handle_x, slider_y - 5, 10, slider_height + 10))
+        handle_x = slider_x + (self.character_data["health"] - min_health) * (slider_width / (max_health - min_health))
+        handle_rect = pygame.Rect(handle_x, slider_y - 5, 10, slider_height + 10)
+        pygame.draw.rect(screen, RED, handle_rect)
 
-        if pygame.mouse.get_pressed()[0] == 1 and slider_x <= pygame.mouse.get_pos()[0] <= slider_x + slider_width:
-            self.character_data["health"] = (pygame.mouse.get_pos()[0] - slider_x) // 5
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        mouse_pressed = pygame.mouse.get_pressed()[0]
+
+        if mouse_pressed and handle_rect.collidepoint(mouse_x, mouse_y) and not self.dragging:
+            self.dragging = True
+
+        if self.dragging:
+            if slider_x <= mouse_x <= slider_width + slider_x:
+                self.character_data["health"] = min_health + int((mouse_x - slider_x) / slider_width * (max_health - min_health))
+                self.character_data["health"] = max(min_health, min(max_health, self.character_data["health"]))
+
+        if not mouse_pressed:
+            self.dragging = False
 
     def handle_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()
-            self.name_active = 100 <= mouse_pos[0] <= 700 and 100 <= mouse_pos[1] <= 150
+            name_box_x = (WIDTH - (WIDTH // 2)) // 2 + 80
+            name_box_y = HEIGHT // 4
+            name_box_width = WIDTH // 2
+            name_box_height = HEIGHT // 15
+            self.name_active = name_box_x <= mouse_pos[0] <= name_box_x + name_box_width and name_box_y <= mouse_pos[1] <= name_box_y + name_box_height
+
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            mouse_pos = pygame.mouse.get_pos()
+            for button in self.buttons:
+                button.check_click(mouse_pos)
 
         if event.type == pygame.KEYDOWN and self.name_active:
-            self.character_data["name"] = self.character_data["name"]
-        elif hasattr(event, 'unicode'):
-                self.character_data["name"] += event.unicode
+            if event.key == pygame.K_BACKSPACE:
+                self.character_data["name"] = self.character_data["name"][:-1]
+        elif len(self.character_data["name"]) < 12:
+                if hasattr(event, 'unicode'):
+                    self.character_data["name"] += event.unicode
+
+    def return_step(self):
+        screen_manager.set_screen("select_character")
 
     def next_step(self):
-            screen_manager.set_screen("abilities_step")
+        screen_manager.set_screen("abilities_step")
 
 class AbilitiesStep(CustomCharacter):
     def __init__(self, color=GRAY):
@@ -294,37 +340,61 @@ class DescriptionStep(CustomCharacter):
     def __init__(self, color=GRAY):
         super().__init__(color)
         self.description_active = False
-        self.add_button("Finish", self.finish, color=GREEN)
         self.add_button("Back", self.prev_step, color=GREEN)
+        self.add_button("Finish", self.finish, color=GREEN)
+        self.text_font = pygame.font.SysFont(font_types[current_font], 16)
 
     def render(self):
         screen.fill(self.color)
         title_surface = font.render("Step 4: Enter Description", True, BLACK)
         screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, 20))
 
-        self.draw_text_input_box(self.character_data["description"], 100, 100, 600, 50, GREEN, self.description_active)
+        box_x, box_y = WIDTH // 10, HEIGHT // 5
+        box_width, box_height = WIDTH - 2 * (WIDTH // 10), HEIGHT // 3
+        self.draw_text_input_box(self.character_data["description"], box_x, box_y, box_width, box_height, WHITE, self.description_active)
         description_label = font.render("Description:", True, BLACK)
-        screen.blit(description_label, (100, 60))
+        screen.blit(description_label, (box_x, box_y - 40))
+
+        button_y = box_y + box_height + 20
+        if self.buttons:
+            self.buttons[0].render((WIDTH // 2) - self.buttons[0].width - 20, button_y)
+            self.buttons[1].render((WIDTH // 2) + 20, button_y)
 
     def draw_text_input_box(self, text, x, y, width, height, active_color, active):
-        box_color = active_color if active else GRAY
+        box_color = active_color if active else RED
         pygame.draw.rect(screen, box_color, (x, y, width, height))
-        text_surface = font.render(text, True, BLACK)
-        screen.blit(text_surface, (x + 5, y + (height // 2 - text_surface.get_height() // 2)))
+
+        words = text.split(' ')
+        line = ""
+        y_offset = y + 5
+        line_height = self.text_font.get_height()
+
+        for word in words:
+            test_line = line + word + " "
+            test_surface = self.text_font.render(test_line, True, BLACK)
+            if test_surface.get_width() > width - 10:
+                rendered_line = self.text_font.render(line, True, BLACK)
+                screen.blit(rendered_line, (x + 5, y_offset))
+                y_offset += line_height
+                line = word + " "
+            else:
+                line = test_line
+
+        rendered_line = self.text_font.render(line, True, BLACK)
+        screen.blit(rendered_line, (x + 5, y_offset))
 
     def handle_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()
-            self.description_active = 100 <= mouse_pos[0] <= 700 and 100 <= mouse_pos[1] <= 150
+            box_x, box_y, box_width, box_height = WIDTH // 10, HEIGHT // 5, WIDTH - 2 * (WIDTH // 10), HEIGHT // 3
+            self.description_active = box_x <= mouse_pos[0] <= box_x + box_width and box_y <= mouse_pos[1] <= box_y + box_height
 
         if event.type == pygame.KEYDOWN and self.description_active:
             if event.key == pygame.K_BACKSPACE:
                 self.character_data["description"] = self.character_data["description"][:-1]
-            elif len(self.character_data["description"]) < 50:
+            elif len(self.character_data["description"]) < 200:
                 if hasattr(event, 'unicode'):
                     self.character_data["description"] += event.unicode
-
-        super().handle_events(event)
 
     def finish(self):
         screen_manager.set_screen("summary_step")
