@@ -25,15 +25,17 @@ font = pygame.font.SysFont(font_types[current_font], font_size)
 
 
 class Button:
-    def __init__(self, text, action, color=GREEN, font_color=BLACK):
+    def __init__(self, text, action, color=GREEN, font_color=BLACK, metadata=None):
         self.text = text
         self.action = action
         self.color = color
         self.font_color = font_color
+        self.metadata = metadata
         text_surface = font.render(self.text, True, self.font_color)
         self.width = text_surface.get_width() + 40
         self.height = text_surface.get_height() + 20
         self.rect = None
+        self.hovered = False
 
     def render(self, x, y):
         text_surface = font.render(self.text, True, self.font_color)
@@ -41,18 +43,40 @@ class Button:
         pygame.draw.rect(screen, self.color, self.rect)
         screen.blit(text_surface, (self.rect.x + 20, self.rect.y + 10))
 
+        if self.hovered and self.metadata:
+            self.render_metadata()
+
+    def check_hover(self, mouse_pos):
+        if self.rect:
+            self.hovered = self.rect.collidepoint(mouse_pos)
+
     def check_click(self, mouse_pos):
         if self.rect and self.rect.collidepoint(mouse_pos):
             self.action()
 
+    def render_metadata(self):
+        box_width = 200
+        box_height = 100
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        box_x = mouse_x + 15
+        box_y = mouse_y + 15
+
+        pygame.draw.rect(screen, WHITE, (box_x, box_y, box_width, box_height))
+        pygame.draw.rect(screen,BLACK, (box_x, box_y, box_width, box_height), 2)
+
+        y_offset = 10
+        for key, value in self.metadata.items():
+            text_surface = font.render(f"{key}: {value}", True, BLACK)
+            screen.blit(text_surface, (box_x + 5, box_y + y_offset))
+            y_offset += 20
 
 class Screen:
     def __init__(self, color=GRAY):
         self.color = color
         self.buttons = []
 
-    def add_button(self, text, action, color=GREEN):
-        button = Button(text, action, color)
+    def add_button(self, text, action, color=GREEN, metadata=None):
+        button = Button(text, action, color, metadata=metadata)
         self.buttons.append(button)
 
     def render(self):
@@ -60,10 +84,16 @@ class Screen:
         total_height = sum(button.height + 20 for button in self.buttons) - 20
         y = (HEIGHT - total_height) // 2
         for button in self.buttons:
+            button.check_hover(pygame.mouse.get_pos())
             button.render((WIDTH - button.width) // 2, y)
             y += button.height + 20
 
     def handle_events(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_pos = pygame.mouse.get_pos()
+            for button in self.buttons:
+                button.check_hover(mouse_pos)
+
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pos = pygame.mouse.get_pos()
             for button in self.buttons:
@@ -183,8 +213,11 @@ class NameHealthStep(CustomCharacter):
 
         button_y = slider_y + HEIGHT // 15 + 30
         if len(self.buttons) >= 2:
-            self.buttons[0].render((WIDTH // 2) - self.buttons[0].width - 20, button_y)
-            self.buttons[1].render((WIDTH // 2) + 20, button_y)
+            button_spacing = 40
+            total_width = self.buttons[0].width + self.buttons[1].width + button_spacing
+            left_x = (WIDTH - total_width) // 2
+            self.buttons[0].render(left_x, button_y)
+            self.buttons[1].render(left_x + self.buttons[0].width + button_spacing, button_y)
 
 
     def draw_text_input_box(self, text, x, y, width, height, active_color, active):
@@ -249,12 +282,26 @@ class NameHealthStep(CustomCharacter):
 class AbilitiesStep(CustomCharacter):
     def __init__(self, color=GRAY):
         super().__init__(color)
-        self.available_abilities = ["Fireball", "Freeze", "Shield Block", "Heal", "Hunting"]
+        self.available_abilities = [
+                                    {"Name": "Fireball", "Damage": 30, "Mana": 20, "Crit_chance": 35, "Crit_damage": 45, "Description": "Throws a fireball that deal massive damage and can inflict burn dot"},
+                                    {"Name": "Freeze", "Damage": 10, "Mana": 15, "Crit_chance": 20, "Crit_damage": 30, "Description": "Cover your enemies in ice and don`t let them move for a time"},
+                                    {"Name": "Magical Barrier", "Damage": 0, "Mana": 15, "Crit_chance": 0, "Crit_damage": 0, "Description": "Take a barrier that would defend you from magical damage and dots"},
+                                    {"Name": "Pray", "Damage": 0, "Mana": 5, "Crit_chance": 0, "Crit_damage": 0, "Description": "Pray the Gods to restore your wounds and increase your damage"},
+                                    {"Name": "Hollow Strike", "Damage": 20, "Mana": 20, "Crit_chance": 20, "Crit_damage": 24, "Description": "Use knowledge of saints to punish your enemies and reduce their resistance to hollow magic"},
+                                    {"Name": "Search", "Damage": 0, "Mana": 10, "Crit_chance": 0, "Crit_damage": 0, "Description": "Search a place for probability to find some things"},
+                                    {"Name": "Trap", "Damage": 15, "Mana": 15, "Crit_chance": 25, "Crit_damage": 30, "Description": "Install a trap to stop your enemies and bleed them"},
+                                    {"Name": "Expel", "Damage": 20, "Mana": 30, "Crit_chance": 40, "Crit_damage": 30, "Description": "Expel enemies that renounce the Gods and return them to Paradise"}
+                                    ]
 
         self.buttons = []
 
         for ability in self.available_abilities:
-            self.add_button(ability, lambda a=ability: self.select_ability(a), color=GRAY)
+            self.add_button(
+                            ability["Name"],
+                            lambda a=ability["Name"]: self.select_ability(a["Name"]),
+                            color=GRAY,
+                            metadata=ability
+                            )
 
         self.add_button("Back", self.prev_step, color=GREEN)
         self.add_button("Next", self.next_step, color=GREEN)
@@ -262,13 +309,14 @@ class AbilitiesStep(CustomCharacter):
     def render(self):
         screen.fill(self.color)
         title_surface = font.render("Step 2: Choose Abilities", True, BLACK)
-        screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, 20))
+        screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, HEIGHT // 10))
 
         button_spacing = 20
         total_width = sum(button.width + button_spacing for button in self.buttons[:len(self.available_abilities)]) - button_spacing
         x = (WIDTH - total_width) // 2
         y = HEIGHT // 2 - 50
         for idx, button in enumerate(self.buttons[:len(self.available_abilities)]):
+            button.check_hover(pygame.mouse.get_pos())
             button.render(x, y)
             x += button.width + 20
 
@@ -373,15 +421,17 @@ class DescriptionStep(CustomCharacter):
             test_line = line + word + " "
             test_surface = self.text_font.render(test_line, True, BLACK)
             if test_surface.get_width() > width - 10:
-                rendered_line = self.text_font.render(line, True, BLACK)
-                screen.blit(rendered_line, (x + 5, y_offset))
-                y_offset += line_height
-                line = word + " "
+                if y_offset + line_height < y + height:
+                    rendered_line = self.text_font.render(line, True, BLACK)
+                    screen.blit(rendered_line, (x + 5, y_offset))
+                    y_offset += line_height
+                    line = word + " "
             else:
                 line = test_line
 
-        rendered_line = self.text_font.render(line, True, BLACK)
-        screen.blit(rendered_line, (x + 5, y_offset))
+        if y_offset + line_height < y + height:
+            rendered_line = self.text_font.render(line, True, BLACK)
+            screen.blit(rendered_line, (x + 5, y_offset))
 
     def handle_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
