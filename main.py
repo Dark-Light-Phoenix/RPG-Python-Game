@@ -1,3 +1,5 @@
+from importlib.metadata import metadata
+
 import pygame
 import sys
 
@@ -31,44 +33,58 @@ class Button:
         self.color = color
         self.font_color = font_color
         self.metadata = metadata
+        self.selected = False
         text_surface = font.render(self.text, True, self.font_color)
         self.width = text_surface.get_width() + 40
         self.height = text_surface.get_height() + 20
-        self.rect = None
+        self.rect = pygame.Rect(0, 0, self.width, self.height)
         self.hovered = False
 
     def render(self, x, y):
+        self.rect = pygame.Rect(x, y, self.width, self.height)
+        draw_color = (100, 0, 100) if self.selected else self.color
+        pygame.draw.rect(screen, draw_color, self.rect)
+
+        border_box = BLACK if not self.selected else (255, 255, 0)
+        pygame.draw.rect(screen, border_box, self.rect, 3)
+
         text_surface = font.render(self.text, True, self.font_color)
-        self.rect = pygame.Rect(x, y, text_surface.get_width() + 40, text_surface.get_height() + 20)
-        pygame.draw.rect(screen, self.color, self.rect)
         screen.blit(text_surface, (self.rect.x + 20, self.rect.y + 10))
 
         if self.hovered and self.metadata:
             self.render_metadata()
 
     def check_hover(self, mouse_pos):
-        if self.rect:
-            self.hovered = self.rect.collidepoint(mouse_pos)
+        self.hovered = self.rect.collidepoint(mouse_pos)
 
     def check_click(self, mouse_pos):
         if self.rect and self.rect.collidepoint(mouse_pos):
             self.action()
 
     def render_metadata(self):
-        box_width = 200
-        box_height = 100
+        box_padding = 10
+        line_height = font.get_height() + 5
+        metadata_lines = len(self.metadata)
+        box_width = 300
+        box_height = metadata_lines * line_height + (2 * box_padding)
+
         mouse_x, mouse_y = pygame.mouse.get_pos()
         box_x = mouse_x + 15
         box_y = mouse_y + 15
 
-        pygame.draw.rect(screen, WHITE, (box_x, box_y, box_width, box_height))
-        pygame.draw.rect(screen,BLACK, (box_x, box_y, box_width, box_height), 2)
+        if box_x + box_width > WIDTH:
+            box_x = WIDTH - box_width - 15
+        if box_y + box_height > HEIGHT:
+            box_y = HEIGHT - box_height - 15
 
-        y_offset = 10
+        pygame.draw.rect(screen, WHITE, (box_x, box_y, box_width, box_height))
+        pygame.draw.rect(screen, BLACK, (box_x, box_y, box_width, box_height), 2)
+
+        y_offset = box_y + box_padding
         for key, value in self.metadata.items():
             text_surface = font.render(f"{key}: {value}", True, BLACK)
-            screen.blit(text_surface, (box_x + 5, box_y + y_offset))
-            y_offset += 20
+            screen.blit(text_surface, (box_x + box_padding, y_offset))
+            y_offset += line_height
 
 class Screen:
     def __init__(self, color=GRAY):
@@ -283,25 +299,25 @@ class AbilitiesStep(CustomCharacter):
     def __init__(self, color=GRAY):
         super().__init__(color)
         self.available_abilities = [
-                                    {"Name": "Fireball", "Damage": 30, "Mana": 20, "Crit_chance": 35, "Crit_damage": 45, "Description": "Throws a fireball that deal massive damage and can inflict burn dot"},
-                                    {"Name": "Freeze", "Damage": 10, "Mana": 15, "Crit_chance": 20, "Crit_damage": 30, "Description": "Cover your enemies in ice and don`t let them move for a time"},
-                                    {"Name": "Magical Barrier", "Damage": 0, "Mana": 15, "Crit_chance": 0, "Crit_damage": 0, "Description": "Take a barrier that would defend you from magical damage and dots"},
-                                    {"Name": "Pray", "Damage": 0, "Mana": 5, "Crit_chance": 0, "Crit_damage": 0, "Description": "Pray the Gods to restore your wounds and increase your damage"},
-                                    {"Name": "Hollow Strike", "Damage": 20, "Mana": 20, "Crit_chance": 20, "Crit_damage": 24, "Description": "Use knowledge of saints to punish your enemies and reduce their resistance to hollow magic"},
-                                    {"Name": "Search", "Damage": 0, "Mana": 10, "Crit_chance": 0, "Crit_damage": 0, "Description": "Search a place for probability to find some things"},
-                                    {"Name": "Trap", "Damage": 15, "Mana": 15, "Crit_chance": 25, "Crit_damage": 30, "Description": "Install a trap to stop your enemies and bleed them"},
-                                    {"Name": "Expel", "Damage": 20, "Mana": 30, "Crit_chance": 40, "Crit_damage": 30, "Description": "Expel enemies that renounce the Gods and return them to Paradise"}
+                                    {"Name": "Fireball", "Damage": 30, "Mana": 20, "Crit Chance": 35, "Crit Damage": 45, "Description": "Throws a fireball that deal massive damage and can inflict burn dot"},
+                                    {"Name": "Freeze", "Damage": 10, "Mana": 15, "Crit Chance": 20, "Crit Damage": 30, "Description": "Cover your enemies in ice and don`t let them move for a time"},
+                                    {"Name": "Magical Barrier", "Damage": 0, "Mana": 15, "Crit Chance": 0, "Crit Damage": 0, "Description": "Take a barrier that would defend you from magical damage and dots"},
+                                    {"Name": "Pray", "Damage": 0, "Mana": 5, "Crit Chance": 0, "Crit Damage": 0, "Description": "Pray the Gods to restore your wounds and increase your damage"},
+                                    {"Name": "Hollow Strike", "Damage": 20, "Mana": 20, "Crit Chance": 20, "CritDamage": 24, "Description": "Use knowledge of saints to punish your enemies and reduce their resistance to hollow magic"},
+                                    {"Name": "Search", "Damage": 0, "Mana": 10, "Crit Chance": 0, "Crit Damage": 0, "Description": "Search a place for probability to find some things"},
+                                    {"Name": "Trap", "Damage": 15, "Mana": 15, "Crit Chance": 25, "Crit Damage": 30, "Description": "Install a trap to stop your enemies and bleed them"},
+                                    {"Name": "Expel", "Damage": 20, "Mana": 30, "Crit Chance": 40, "Crit Damage": 30, "Description": "Expel enemies that renounce the Gods and return them to Paradise"}
                                     ]
 
         self.buttons = []
 
         for ability in self.available_abilities:
-            self.add_button(
+            self.buttons.append(Button(
                             ability["Name"],
-                            lambda a=ability["Name"]: self.select_ability(a["Name"]),
+                            lambda a=ability["Name"]: self.select_ability(a),
                             color=GRAY,
                             metadata=ability
-                            )
+                            ))
 
         self.add_button("Back", self.prev_step, color=GREEN)
         self.add_button("Next", self.next_step, color=GREEN)
@@ -311,14 +327,18 @@ class AbilitiesStep(CustomCharacter):
         title_surface = font.render("Step 2: Choose Abilities", True, BLACK)
         screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, HEIGHT // 10))
 
-        button_spacing = 20
-        total_width = sum(button.width + button_spacing for button in self.buttons[:len(self.available_abilities)]) - button_spacing
-        x = (WIDTH - total_width) // 2
-        y = HEIGHT // 2 - 50
+        button_spacing = 30
+        max_button_per_raw = (WIDTH - button_spacing) // (self.buttons[0].width + button_spacing)
+        x_start = (WIDTH - (max_button_per_raw * (self.buttons[0].width + button_spacing) - button_spacing)) // 2
+        x = x_start
+        y = HEIGHT // 2 - 100
         for idx, button in enumerate(self.buttons[:len(self.available_abilities)]):
             button.check_hover(pygame.mouse.get_pos())
             button.render(x, y)
-            x += button.width + 20
+            x += button.width + button_spacing
+            if (idx + 1) % max_button_per_raw == 0:
+                x = x_start
+                y += button.height + button_spacing
 
         nav_total_width = self.buttons[-2].width + self.buttons[-1].width + button_spacing
         nav_x = (WIDTH - nav_total_width) // 2
@@ -326,12 +346,17 @@ class AbilitiesStep(CustomCharacter):
         self.buttons[-2].render(nav_x, nav_y)
         self.buttons[-1].render(nav_x + self.buttons[-2].width + button_spacing, nav_y)
 
-    def select_ability(self, ability):
-        if ability in self.character_data["abilities"]:
-            self.character_data["abilities"].remove(ability)
-        elif len(self.character_data["abilities"]) < 3:
-            self.character_data["abilities"].append(ability)
-        print("Selected abilities:", self.character_data["abilities"])
+    def select_ability(self, ability_name):
+        for button in self.buttons[:len(self.available_abilities)]:
+            if button.text == ability_name:
+                if button.selected:
+                    button.selected = False
+                    self.character_data["abilities"].remove(ability_name)
+                else:
+                    if len(self.character_data["abilities"]) < 3:
+                        button.selected = True
+                        self.character_data["abilities"].append(ability_name)
+                break
 
     def next_step(self):
         screen_manager.set_screen("items_step")
