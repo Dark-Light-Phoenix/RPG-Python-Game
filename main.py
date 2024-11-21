@@ -299,14 +299,15 @@ class AbilitiesStep(CustomCharacter):
     def __init__(self, color=GRAY):
         super().__init__(color)
         self.available_abilities = [
-                                    {"Name": "Fireball", "Damage": 30, "Mana": 20, "Crit Chance": 35, "Crit Damage": 45, "Description": "Throws a fireball that deal massive damage and can inflict burn dot"},
-                                    {"Name": "Freeze", "Damage": 10, "Mana": 15, "Crit Chance": 20, "Crit Damage": 30, "Description": "Cover your enemies in ice and don`t let them move for a time"},
+                                    {"Name": "Fireball", "Damage": 20-30, "Mana": 20, "Crit Chance": 35, "Crit Damage": 45-60, "Description": "Throws a fireball that deal massive damage and can inflict burn dot"},
+                                    {"Name": "Freeze", "Damage": 10-15, "Mana": 15, "Crit Chance": 20, "Crit Damage": 30-35, "Description": "Cover your enemies in ice and don`t let them move for a time"},
                                     {"Name": "Magical Barrier", "Damage": 0, "Mana": 15, "Crit Chance": 0, "Crit Damage": 0, "Description": "Take a barrier that would defend you from magical damage and dots"},
                                     {"Name": "Pray", "Damage": 0, "Mana": 5, "Crit Chance": 0, "Crit Damage": 0, "Description": "Pray the Gods to restore your wounds and increase your damage"},
                                     {"Name": "Hollow Strike", "Damage": 20, "Mana": 20, "Crit Chance": 20, "CritDamage": 24, "Description": "Use knowledge of saints to punish your enemies and reduce their resistance to hollow magic"},
                                     {"Name": "Search", "Damage": 0, "Mana": 10, "Crit Chance": 0, "Crit Damage": 0, "Description": "Search a place for probability to find some things"},
-                                    {"Name": "Trap", "Damage": 15, "Mana": 15, "Crit Chance": 25, "Crit Damage": 30, "Description": "Install a trap to stop your enemies and bleed them"},
-                                    {"Name": "Expel", "Damage": 20, "Mana": 30, "Crit Chance": 40, "Crit Damage": 30, "Description": "Expel enemies that renounce the Gods and return them to Paradise"}
+                                    {"Name": "Trap", "Damage": 12-25, "Mana": 15, "Crit Chance": 25, "Crit Damage": 30-40, "Description": "Install a trap to stop your enemies and bleed them"},
+                                    {"Name": "Expel", "Damage": 20-23, "Mana": 30, "Crit Chance": 40, "Crit Damage": 30-45, "Description": "Expel enemies that renounce the Gods and return them to Paradise"},
+                                    {"Name": "Poison", "Damage": 20-22, "Mana": 30, "Crit Chance": 40, "Crit Damage": 30-34, "Description": "Expel enemies that renounce the Gods and return them to Paradise"}
                                     ]
 
         self.buttons = []
@@ -367,7 +368,91 @@ class AbilitiesStep(CustomCharacter):
 class ItemsStep(CustomCharacter):
     def __init__(self, color=GRAY):
         super().__init__(color)
-        self.available_items = ["Sword", "Shield", "Bow", "Staff", "Armor"]
+        self.available_items = [
+
+            #Weapons
+            {"Name": "Wooden Sword", "Damage": 5-8, "Defense": 0, "Crit Chance": 10, "Crit Damage": 12-16, "Description": "Simple wooden sword that uses in training soldiers"},
+            {"Name": "Wooden Shield", "Damage": 2-4, "Defense": 10 ,"Crit Chance": 5, "Crit Damage": 8-10, "Description": "Wooden shield that can defend you from simple attacks"},
+            {"Name": "Wooden Staff", "Damage": 4-6, "Defense": 0, "Crit Chance": 8, "Crit Damage": 10-12, "Description": "Staff of magical newbie. It can strengthen your base ability"},
+            {"Name": "Book of Spells", "Damage": 3-5, "Defense": 0, "Crit Chance": 10, "Crit Damage": 7-9, "Description": "Book that contains spells and knowledge. Written by the most knowledge mages"},
+
+            #Leather Armor
+            {"Name": "Lather Helmet", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "Helmet made from lather of animals and cover you from wounds"},
+            {"Name": "Lather Chest", "Damage": 0, "Defense": 8, "Crit Chance": 0, "Crit Damage": 0, "Description": "Chest made from lather of animals. Can help you live longer"},
+            {"Name": "Lather Gloves", "Damage": 0, "Defense": 2, "Crit Chance": 0, "Crit Damage": 0, "Description": "Gloves made from lather of animals that help your arms be healthier"},
+            {"Name": "Leather Boots", "Damage": 0, "Defense": 2, "Crit Chance": 0, "Crit Damage": 0, "Description": "Boots that uses in our life. Help you to be cleaner and don`t stand on rocks"},
+
+            #Magical Clothes
+            {"Name": "Magical Hat", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "Hat with mythical runes that cover some power abd knowledge"},
+            {"Name": "Cloak", "Damage": 0, "Defense": 4, "Crit Chance": 0, "Crit Damage": 0, "Description": "Base dress of mage, made of different flowers to cover their weaver from different affection"},
+
+            #Arcane Whisper
+            {"Name": "Runed Hat", "Damage": 0, "Defense": 2, "Crit Chance": 8, "Crit Damage": 0, "Description": "A conical hat adorned with shimmering runes that enhance critical spell effects."},
+            {"Name": "Arcane Cloak", "Damage": 0, "Defense": 4, "Crit Chance": 5, "Crit Damage": 0, "Description": "A glowing blue cloak inscribed with arcane runes, offering magical resistance and amplifying spell power."},
+            {"Name": "Gloves of the Adept", "Damage": 0, "Defense": 1, "Crit Chance": 0, "Crit Damage": 0, "Description": "Delicate gloves that improve mana flow and spellcasting precision."},
+            {"Name": "Enchanted Boots", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "Lightweight boots that allow silent movement and boost magical energy absorption."},
+
+            #Emerald Grace
+            {"Name": "Circlet of Harmony", "Damage": 0, "Defense": 2, "Crit Chance": 0, "Crit Damage": 0, "Description": "A delicate circlet that enhances the wearer's attunement to nature and magic."},
+            {"Name": "Nature's Embrace Cloak", "Damage": 0, "Defense": 5, "Crit Chance": 0, "Crit Damage": 0, "Description": "A vibrant green cloak infused with natural magic, increasing resistance to elemental damage."},
+            {"Name": "Forestweave Gloves", "Damage": 0, "Defense": 2, "Crit Chance": 0, "Crit Damage": 0, "Description": "Gloves designed to channel natural magic and protect the hands during spellcasting."},
+            {"Name": "Elven Boots", "Damage": 0, "Defense": 4, "Crit Chance": 0, "Crit Damage": 0, "Description": "Crafted from the finest elven leather, these boots enhance agility and silent movement."},
+
+            #Iron Vow
+            {"Name": "Steel Helm", "Damage": 0, "Defense": 5, "Crit Chance": 2, "Crit Damage": 0, "Description": "A heavy helmet that safeguards the head while maintaining visibility and awareness."},
+            {"Name": "Ironbound Chestplate", "Damage": 0, "Defense": 10, "Crit Chance": 0, "Crit Damage": 0, "Description": "A sturdy chestplate that offers immense protection against physical attacks."},
+            {"Name": "Gauntlets of Strength", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "Reinforced gauntlets that enhance grip strength and combat power."},
+            {"Name": "Plated Greaves", "Damage": 0, "Defense": 6, "Crit Chance": 0, "Crit Damage": 0, "Description": "Heavy boots designed for durability and stability in battle."},
+
+            #Sanctuary`s Light
+            {"Name": "Hood of Sanctity", "Damage": 0, "Defense": 2, "Crit Chance": 0, "Crit Damage": 0, "Description": "A white hood that amplifies the wearer's focus on divine spells."},
+            {"Name": "Blessed Robe", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "A flowing white robe blessed with divine power to enhance healing magic."},
+            {"Name": "Cleric's Gloves", "Damage": 0, "Defense": 1, "Crit Chance": 0, "Crit Damage": 0, "Description": "Simple gloves that improve control over healing magic and reduce energy drain."},
+            {"Name": "Sandals of Grace", "Damage": 0, "Defense": 2, "Crit Chance": 0, "Crit Damage": 0, "Description": "Comfortable sandals that enhance agility and movement during holy rituals."},
+
+            #Shadow`s Step
+            {"Name": "Tracker's Hat", "Damage": 0, "Defense": 2, "Crit Chance": 0, "Crit Damage": 0, "Description": "A lightweight hat that improves tracking and detection skills."},
+            {"Name": "Ranger's Cloak", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "A green hooded cloak that provides camouflage in forests and boosts stealth."},
+            {"Name": "Hunter's Gloves", "Damage": 0, "Defense": 1, "Crit Chance": 0, "Crit Damage": 0, "Description": "Gloves with reinforced tips for precision archery and trap-setting."},
+            {"Name": "Silent Striders", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "Soft-soled boots that allow for silent movement in any terrain."},
+
+            #Phoenix`s Ember
+            {"Name": "Silent Striders", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "Soft-soled boots that allow for silent movement in any terrain."},
+            {"Name": "Phoenix Feather Cloak", "Damage": 0, "Defense": 5, "Crit Chance": 0, "Crit Damage": 0, "Description": "A fiery cloak made from enchanted phoenix feathers, granting fire resistance and a boost to flame magic."},
+            {"Name": "Inferno Gloves", "Damage": 0, "Defense": 2, "Crit Chance": 0, "Crit Damage": 0, "Description": "Gloves imbued with flames, enhancing control over fire-based attacks."},
+            {"Name": "Ashen Boots", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "Lightweight boots that allow quick movement through fiery terrains."},
+
+            #Frozen Sentinel
+            {"Name": "Crown of Ice", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "A crystal circlet forged from eternal ice, amplifying frost-based abilities."},
+            {"Name": "Frost Cloak", "Damage": 0, "Defense": 4, "Crit Chance": 0, "Crit Damage": 0, "Description": "A shimmering cloak radiating cold energy, reducing damage from fire attacks."},
+            {"Name": "Icy Grasp Gloves", "Damage": 0, "Defense": 2, "Crit Chance": 0, "Crit Damage": 0, "Description": "Cold-resistant gloves that enhance frost spell damage and critical effects."},
+            {"Name": "Frozen Striders", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "Boots that allow the wearer to traverse icy surfaces effortlessly."},
+
+            #Venom`s Embrace
+            {"Name": "Assassin’s Mask", "Damage": 0, "Defense": 2, "Crit Chance": 0, "Crit Damage": 0, "Description": "A lightweight mask that conceals the wearer’s identity while boosting perception."},
+            {"Name": "Shadow Venom Cloak", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "A cloak infused with toxic magic, granting stealth and poison resistance."},
+            {"Name": "Venomous Grip Gloves", "Damage": 0, "Defense": 1, "Crit Chance": 0, "Crit Damage": 0, "Description": "Gloves laced with venom, increasing the potency of poison-based attacks."},
+            {"Name": "Silent Shadows Boots", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "Silent boots that leave no trace, perfect for sneaking behind enemies."},
+
+            #Draconic Vanguard
+            {"Name": "Dragon Crest Helm", "Damage": 0, "Defense": 6, "Crit Chance": 0, "Crit Damage": 0, "Description": "A sturdy helm crafted from dragon bone, enhancing combat awareness and resilience."},
+            {"Name": "Dragon Scale Chestplate", "Damage": 0, "Defense": 12, "Crit Chance": 0, "Crit Damage": 0, "Description": "Heavy armor forged from dragon scales, offering immense protection against physical and fire damage."},
+            {"Name": "Draconic Gauntlets", "Damage": 0, "Defense": 5, "Crit Chance": 0, "Crit Damage": 0, "Description": "Gauntlets imbued with dragon’s power, increasing attack strength."},
+            {"Name": "Scaled Boots", "Damage": 0, "Defense": 5, "Crit Chance": 0, "Crit Damage": 0, "Description": "Heavy boots reinforced with dragon hide, granting stability and fire resistance."},
+
+            #Celestail Radiance
+            {"Name": "Halo Hood", "Damage": 0, "Defense": 4, "Crit Chance": 0, "Crit Damage": 0, "Description": "A glowing hood that enhances divine focus and critical healing effects."},
+            {"Name": "Celestial Robe", "Damage": 0, "Defense": 6, "Crit Chance": 0, "Crit Damage": 0, "Description": "A radiant robe blessed by celestial beings, amplifying healing and support magic."},
+            {"Name": "Sacred Touch Gloves", "Damage": 0, "Defense": 2, "Crit Chance": 0, "Crit Damage": 0, "Description": "Gloves that radiate warmth, soothing allies and boosting healing power."},
+            {"Name": "Divine Step Sandals", "Damage": 0, "Defense": 3, "Crit Chance": 0, "Crit Damage": 0, "Description": "Light sandals that allow the wearer to move gracefully and cast healing magic."},
+
+            #Stormbringer`s Might
+            {"Name": "Thunder Helm", "Damage": 0, "Defense": 5, "Crit Chance": 0, "Crit Damage": 0, "Description": "A helm that crackles with electricity, intimidating foes and enhancing awareness."},
+            {"Name": "Stormforged Plate", "Damage": 0, "Defense": 10, "Crit Chance": 0, "Crit Damage": 0, "Description": "A heavy plate charged with lightning energy, striking enemies who dare attack."},
+            {"Name": "Lightning Claw Gauntlets", "Damage": 0, "Defense": 4, "Crit Chance": 8, "Crit Damage": 0, "Description": "Gauntlets infused with lightning, delivering electrifying blows."},
+            {"Name": "Stormstep Boots", "Damage": 0, "Defense": 4, "Crit Chance": 0, "Crit Damage": 0, "Description": "Boots that spark with energy, allowing rapid and agile movement."},
+
+        ]
 
         self.buttons = []
 
